@@ -1,0 +1,9 @@
+name = "HattrickHarvester"
+uuid = "3ab45f4d-904d-4be2-a0fe-0d66d4687fad"
+authors = ["marcobonici <bonici.marco@gmail.com>"]
+version = "0.1.0"
+
+[deps]
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
+JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
