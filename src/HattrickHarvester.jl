@@ -4,8 +4,14 @@ using DataFrames
 using Dates
 using FilePathsBase: joinpath, mkpath
 using Glob
+using InteractiveUtils: clipboard
 using JSON
 using Logging
+
+function get_extension(filename::String)
+    idx = findlast(isequal('.'), filename)
+    return idx === nothing ? "" : filename[idx:end]
+end
 
 function extract_skill(s::AbstractString, skill::String)
     """
@@ -617,7 +623,8 @@ function for_loop(input_folder, output_folder)
                 continue
             end
             player_id = content["PlayerID"]
-            @info "Player ID being analyzed" player_id
+            @info "Player ID being analyzed copied to clipboard" player_id
+            clipboard(player_id)
 
             # 3) Collect multiline input
             println("\nPaste your data block (end with blank line):")
@@ -661,6 +668,11 @@ function for_loop(input_folder, output_folder)
             out_path = joinpath(output_folder, filename)
             save_dict_to_json(merged, out_path)
             println("→ Written: ", out_path)
+
+            if get_extension(in_path) == ".json"
+                rm(in_path)
+                @info "File removed from the ongoing folder."
+            end
 
         catch err
             @error "Error processing file" file = in_path error = err
