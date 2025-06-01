@@ -2,7 +2,10 @@ module HattrickHarvester
 
 using DataFrames
 using Dates
+using FilePathsBase: joinpath, mkpath
+using Glob
 using JSON
+using Logging
 
 function extract_skill(s::AbstractString, skill::String)
     """
@@ -593,6 +596,79 @@ function extract_last_numbers(text::String)
         "AgeDays" => age_days,
         "Price" => price
     )
+end
+
+function for_loop(input_folder, output_folder)
+    keys_to_drop = Set(["TSI", "AgeDays", "AgeYears"])
+
+    for in_path in glob("*.json", input_folder)
+        println("────────────────────────────────────")
+        println("Processing: ", in_path)
+
+        try
+            # 1) Load first dict
+            content = JSON.parsefile(in_path)  # Dict{String,Any}
+
+            # 2) Print and check PlayerID
+            println("Original JSON:")
+            println(content)
+            if !haskey(content, "PlayerID")
+                @warn "Missing PlayerID" file = in_path
+                continue
+            end
+            player_id = content["PlayerID"]
+            @info "Player ID being analyzed" player_id
+
+            # 3) Collect multiline input
+            println("\nPaste your data block (end with blank line):")
+            lines = String[]
+            while true
+                line = readline()
+                isempty(line) && break
+                push!(lines, line)
+            end
+            user_block = join(lines, "\n")
+
+            # 4) Harvest second dict
+            second_dict = HattrickHarvester.extract_last_numbers(user_block)
+            println("\nExtracted dict:")
+            println(second_dict)
+
+            # 5) Filter out unwanted keys from first dict
+            first_filtered = Dict{String,Any}()
+            for (k, v) in content
+                k in keys_to_drop || (first_filtered[k] = v)
+            end
+
+            # 6) Merge dicts
+            merged = merge(first_filtered, second_dict)
+            println("\nMerged dict:")
+            println(merged)
+
+            # 7) Build output filename: playerID_season_seasonWeek.json
+            #    Adjust the key names below to match your second_dict:
+            season = get(merged, "Season", get(merged, "season", missing))
+            seasonweek = get(merged, "SeasonWeek", get(merged, "seasonWeek", missing))
+
+            if season === missing || seasonweek === missing
+                @warn "Missing season or seasonWeek in merged dict; using generic filename"
+                filename = "$(player_id)"
+            else
+                filename = string(player_id, "_", season, "_", seasonweek)
+            end
+
+            # 8) Write to output folder
+            out_path = joinpath(output_folder, filename)
+            save_dict_to_json(merged, out_path)
+            println("→ Written: ", out_path)
+
+        catch err
+            @error "Error processing file" file = in_path error = err
+        end
+
+        println()  # spacer
+    end
+    return nothing
 end
 
 end # module HattrickHarvester
