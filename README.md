@@ -13,8 +13,8 @@ HattrickHarvester.jl is a Julia package for extracting player and transfer data 
   _(Status: Working, under refinement)_
 
 - **Full Archive Import**
-  Download the entire archive of player data and build a `DataFrame`.
-  _(Status: Planned)_
+  Read the entire archive of player data and build a `DataFrame`.
+  _(Status: Workung, under refinement)_
 
 - **Graphical User Interface**
   Using the package through a GUI, for user convenience.

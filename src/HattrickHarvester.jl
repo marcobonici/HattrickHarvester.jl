@@ -607,7 +607,7 @@ end
 function for_loop(input_folder, output_folder)
     keys_to_drop = Set(["TSI", "AgeDays", "AgeYears"])
 
-    for in_path in glob("*.json", input_folder)
+    for in_path in sort(glob("*.json", input_folder), by=f -> stat(f).mtime)
         println("────────────────────────────────────")
         println("Processing: ", in_path)
 
@@ -681,6 +681,29 @@ function for_loop(input_folder, output_folder)
         println()  # spacer
     end
     return nothing
+end
+
+function json_folder_to_dataframe(folder_path::String)
+    # Get all files in the folder and filter for JSON files
+    all_files = readdir(folder_path)
+    json_files = filter(endswith(".json"), all_files)
+
+    # Create full paths
+    full_paths = [joinpath(folder_path, file) for file in json_files]
+
+    # Check if any JSON files were found
+    if isempty(json_files)
+        @warn "No JSON files found in the specified folder: $folder_path"
+        return DataFrame()
+    end
+
+    # Read and parse all JSON files using JSON.parse
+    parsed_data = [JSON.parse(read(file_path, String)) for file_path in full_paths]
+
+    # Convert to DataFrame
+    df = DataFrame(parsed_data)
+
+    return df
 end
 
 end # module HattrickHarvester
